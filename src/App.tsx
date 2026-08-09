@@ -48,16 +48,66 @@ export default function App() {
 
   const [lastMove, setLastMove] = useState<{ from: Position; to: Position } | null>(null);
 
-  // Settings
-  const [settings, setSettings] = useState<GameSettings>({
-    mode: 'pvp',
-    aiDifficulty: 'medium',
-    aiColor: 'black',
-    theme: 'emerald',
-    soundEnabled: true,
-    showHighlights: true,
-    autoFlipBoard: false,
+  // Settings initialized with local storage or defaults (defaulting to VS Computer mode)
+  const [settings, setSettings] = useState<GameSettings>(() => {
+    const saved = localStorage.getItem('chain_capture_chess_settings_v2');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return {
+      mode: 'ai',
+      aiDifficulty: 'medium',
+      aiColor: 'black',
+      theme: 'emerald',
+      soundEnabled: true,
+      showHighlights: true,
+      autoFlipBoard: false,
+    };
   });
+
+  // Save settings on update
+  useEffect(() => {
+    localStorage.setItem('chain_capture_chess_settings_v2', JSON.stringify(settings));
+  }, [settings]);
+
+  // Load saved game state on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('chain_capture_chess_match_v2');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        if (parsed.board && parsed.currentTurn) {
+          setBoard(parsed.board);
+          setCurrentTurn(parsed.currentTurn);
+          setHistory(parsed.history || []);
+          setCapturedWhite(parsed.capturedWhite || []);
+          setCapturedBlack(parsed.capturedBlack || []);
+          setWinner(parsed.winner || null);
+          setWinReason(parsed.winReason || '');
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+  }, []);
+
+  // Save match state on update
+  useEffect(() => {
+    const matchState = {
+      board,
+      currentTurn,
+      history,
+      capturedWhite,
+      capturedBlack,
+      winner,
+      winReason,
+    };
+    localStorage.setItem('chain_capture_chess_match_v2', JSON.stringify(matchState));
+  }, [board, currentTurn, history, capturedWhite, capturedBlack, winner, winReason]);
 
   // Modals & UI
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
@@ -466,6 +516,9 @@ export default function App() {
           onOpenSettings={() => setIsSettingsOpen(true)}
           onToggleSound={() =>
             setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))
+          }
+          onToggleMode={(newMode) =>
+            setSettings((s) => ({ ...s, mode: newMode }))
           }
           isAITinking={isAIThinking}
         />

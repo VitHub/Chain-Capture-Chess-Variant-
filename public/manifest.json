@@ -1,0 +1,10 @@
+{
+  "short_name": "Chain Capture",
+  "name": "Chain Capture Chess",
+  "icons": [],
+  "start_url": ".",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "display": "standalone",
+  "orientation": "portrait"
+}

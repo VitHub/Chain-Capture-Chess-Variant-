@@ -1,7 +1,7 @@
 import React from 'react';
 import { GameSettings, PieceColor } from '../types/chess';
 import { PieceIcon } from './PieceIcon';
-import { Volume2, VolumeX, HelpCircle, Settings, RotateCcw, Bot, User } from 'lucide-react';
+import { Volume2, VolumeX, HelpCircle, Settings, RotateCcw, Bot, User, WifiOff } from 'lucide-react';
 
 interface GameHeaderProps {
   currentTurn: PieceColor;
@@ -13,6 +13,7 @@ interface GameHeaderProps {
   onOpenTutorial: () => void;
   onOpenSettings: () => void;
   onToggleSound: () => void;
+  onToggleMode?: (mode: 'ai' | 'pvp') => void;
   isAITinking?: boolean;
 }
 
@@ -24,6 +25,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   onOpenTutorial,
   onOpenSettings,
   onToggleSound,
+  onToggleMode,
   isAITinking = false,
 }) => {
   const isWhiteTurn = currentTurn === 'white';
@@ -40,7 +42,12 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <h1 className="text-sm sm:text-base font-light tracking-widest text-white uppercase flex items-center gap-1.5">
               <span>Chain <span className="font-bold text-amber-500">Capture</span> Chess</span>
             </h1>
-            <p className="text-[10px] text-amber-500/80 font-mono uppercase tracking-wider">Identity Mimicry Engine</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] text-amber-500/80 font-mono uppercase tracking-wider">Identity Mimicry Engine</p>
+              <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[9px] uppercase tracking-wider">
+                <WifiOff className="w-2.5 h-2.5" /> Offline Ready
+              </span>
+            </div>
           </div>
         </div>
 
@@ -78,6 +85,40 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             <span className="hidden sm:inline">Reset</span>
           </button>
         </div>
+      </div>
+
+      {/* Opponent Mode Selector Bar */}
+      <div className="flex items-center justify-between gap-2 bg-[#121212] px-3 py-1.5 rounded border border-white/5 text-xs font-mono">
+        <span className="text-[10px] uppercase tracking-widest text-gray-500">Opponent:</span>
+        <div className="flex items-center gap-1 bg-black/40 p-0.5 rounded border border-white/5">
+          <button
+            onClick={() => onToggleMode?.('ai')}
+            className={`px-2.5 py-1 rounded text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+              settings.mode === 'ai'
+                ? 'bg-amber-500 text-black font-bold shadow-sm'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <Bot className="w-3.5 h-3.5" />
+            <span>VS Computer</span>
+          </button>
+          <button
+            onClick={() => onToggleMode?.('pvp')}
+            className={`px-2.5 py-1 rounded text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+              settings.mode === 'pvp'
+                ? 'bg-amber-500 text-black font-bold shadow-sm'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>Pass & Play</span>
+          </button>
+        </div>
+        {settings.mode === 'ai' && (
+          <span className="text-[10px] text-amber-400 uppercase tracking-wider font-bold">
+            [{settings.aiDifficulty}]
+          </span>
+        )}
       </div>
 
       {/* Turn Status Indicator */}
