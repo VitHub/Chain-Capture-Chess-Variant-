@@ -20,7 +20,7 @@ export interface ChainMovePlan {
 }
 
 /**
- * Recursively explores chain capture sequences from a starting position and active piece type.
+ * Recursively explores chain capture sequences using in-place backtracking (zero board cloning).
  */
 function searchChainCapture(
   board: Board,
@@ -31,49 +31,45 @@ function searchChainCapture(
   accumulatedScore: number,
   depth: number,
   maxDepth: number,
-  visitedPositions: Position[]
-): ChainMovePlan[] {
-  const plans: ChainMovePlan[] = [];
+  visitedPositions: Position[],
+  outPlans: ChainMovePlan[]
+) {
+  if (depth >= maxDepth) return;
 
   // Get raw moves for the active piece type at currentPos
   const moves = getRawMoves(board, currentPos, activeType, color);
 
-  let foundFurtherCapture = false;
+  for (const targetPos of moves) {
+    // Avoid looping onto exact same square in current chain
+    if (visitedPositions.some((p) => isSamePos(p, targetPos))) continue;
 
-  if (depth < maxDepth) {
-    for (const targetPos of moves) {
-      // Avoid looping onto exact same square in immediate sequence
-      if (visitedPositions.some((p) => isSamePos(p, targetPos))) continue;
+    const targetPiece = board[targetPos.row][targetPos.col];
 
-      const targetPiece = board[targetPos.row][targetPos.col];
+    // Search capture moves in chain expansion
+    if (targetPiece && targetPiece.color !== color) {
+      const movingPiece = board[currentPos.row][currentPos.col];
 
-      // We are looking for capture moves in chain expansion
-      if (targetPiece && targetPiece.color !== color) {
-        foundFurtherCapture = true;
+      // Mutate board in-place
+      board[targetPos.row][targetPos.col] = movingPiece;
+      board[currentPos.row][currentPos.col] = null;
 
-        // Perform capture on clone
-        const tempBoard = cloneBoard(board);
-        const movingPiece = tempBoard[currentPos.row][currentPos.col];
-        tempBoard[targetPos.row][targetPos.col] = movingPiece;
-        tempBoard[currentPos.row][currentPos.col] = null;
+      const capturedValue = PIECE_VALUES[targetPiece.type] || 10;
+      const isKing = targetPiece.type === 'king';
+      const stepScore = capturedValue + (isKing ? 10000 : 0);
 
-        const capturedValue = PIECE_VALUES[targetPiece.type] || 10;
-        // Bonus for capturing high-value pieces or King
-        const stepScore = capturedValue + (targetPiece.type === 'king' ? 10000 : 0);
+      const newSteps = [...accumulatedSteps, targetPos];
+      const newScore = accumulatedScore + stepScore;
 
-        const newSteps = [...accumulatedSteps, targetPos];
-        const newScore = accumulatedScore + stepScore;
+      outPlans.push({
+        startPos: accumulatedSteps[0] || currentPos,
+        steps: newSteps,
+        score: newScore,
+      });
 
-        // Add this captured state as a valid plan (we could stop here)
-        plans.push({
-          startPos: accumulatedSteps[0] || currentPos,
-          steps: newSteps,
-          score: newScore,
-        });
-
-        // Continue searching from targetPos as the newly captured piece type!
-        const subPlans = searchChainCapture(
-          tempBoard,
+      // Continue searching from targetPos with targetPiece's identity
+      if (!isKing && depth + 1 < maxDepth) {
+        searchChainCapture(
+          board,
           targetPos,
           targetPiece.type, // Temporary identity change!
           color,
@@ -81,24 +77,16 @@ function searchChainCapture(
           newScore,
           depth + 1,
           maxDepth,
-          [...visitedPositions, targetPos]
+          [...visitedPositions, targetPos],
+          outPlans
         );
-
-        plans.push(...subPlans);
       }
+
+      // Restore board state (backtrack)
+      board[currentPos.row][currentPos.col] = movingPiece;
+      board[targetPos.row][targetPos.col] = targetPiece;
     }
   }
-
-  // If no further captures found, return current plan if we have taken steps
-  if (!foundFurtherCapture && accumulatedSteps.length > 0) {
-    plans.push({
-      startPos: accumulatedSteps[0],
-      steps: accumulatedSteps,
-      score: accumulatedScore,
-    });
-  }
-
-  return plans;
 }
 
 /**
@@ -118,7 +106,7 @@ export function getAllPossibleMovePlans(
       if (piece && piece.color === color) {
         const startPos = { row: r, col: c };
 
-        // 1. Get standard raw moves (non-captures and initial captures)
+        // 1. Get standard raw moves
         const moves = getRawMoves(board, startPos, piece.type, color);
 
         for (const targetPos of moves) {
@@ -126,7 +114,6 @@ export function getAllPossibleMovePlans(
 
           if (!targetPiece) {
             // Non-capture move
-            // Positional score encouraging advancement & center control
             const centerDist = 3.5 - Math.abs(targetPos.col - 3.5) + (3.5 - Math.abs(targetPos.row - 3.5));
             const moveScore = centerDist * 0.5 + (piece.type === 'pawn' ? 1 : 0);
 
@@ -136,9 +123,10 @@ export function getAllPossibleMovePlans(
               score: moveScore,
             });
           } else if (targetPiece.color !== color) {
-            // Initial capture -> search chain depth from here
+            // Initial capture
             const initialCapturedVal = PIECE_VALUES[targetPiece.type] || 10;
-            const initialScore = initialCapturedVal + (targetPiece.type === 'king' ? 10000 : 0);
+            const isKing = targetPiece.type === 'king';
+            const initialScore = initialCapturedVal + (isKing ? 10000 : 0);
 
             plans.push({
               startPos,
@@ -146,13 +134,18 @@ export function getAllPossibleMovePlans(
               score: initialScore,
             });
 
-            if (maxChainDepth > 1) {
-              const tempBoard = cloneBoard(board);
-              tempBoard[targetPos.row][targetPos.col] = piece;
-              tempBoard[startPos.row][startPos.col] = null;
+            if (isKing) {
+              // King capture found! Instant win path
+              return [{ startPos, steps: [targetPos], score: initialScore }];
+            }
 
-              const chains = searchChainCapture(
-                tempBoard,
+            if (maxChainDepth > 1) {
+              // Mutate board in-place for chain evaluation
+              board[targetPos.row][targetPos.col] = piece;
+              board[startPos.row][startPos.col] = null;
+
+              searchChainCapture(
+                board,
                 targetPos,
                 targetPiece.type, // Move as captured piece
                 color,
@@ -160,10 +153,13 @@ export function getAllPossibleMovePlans(
                 initialScore,
                 1,
                 maxChainDepth,
-                [startPos, targetPos]
+                [startPos, targetPos],
+                plans
               );
 
-              plans.push(...chains);
+              // Backtrack
+              board[startPos.row][startPos.col] = piece;
+              board[targetPos.row][targetPos.col] = targetPiece;
             }
           }
         }

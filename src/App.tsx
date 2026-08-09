@@ -483,7 +483,7 @@ export default function App() {
           activeType
         );
         setIsAIThinking(false);
-      }, 700);
+      }, 180);
 
       return () => clearTimeout(timer);
     }
