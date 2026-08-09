@@ -1,0 +1,6 @@
+{
+  "name": "Chain Capture Chess",
+  "description": "A chess game with chain takeover captures: when capturing an opponent piece, move immediately as that piece in the same turn.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
