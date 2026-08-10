@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Board,
   BoardTheme,
+  Bookmark,
   ChainState,
   GameSettings,
   MoveStep,
@@ -29,6 +30,8 @@ import { MoveHistory } from './components/MoveHistory';
 import { TutorialModal } from './components/TutorialModal';
 import { SettingsModal } from './components/SettingsModal';
 import { GameOverModal } from './components/GameOverModal';
+import { BookmarksModal } from './components/BookmarksModal';
+import { PlaybackModal } from './components/PlaybackModal';
 
 export default function App() {
   // Game State
@@ -109,12 +112,93 @@ export default function App() {
     localStorage.setItem('chain_capture_chess_match_v2', JSON.stringify(matchState));
   }, [board, currentTurn, history, capturedWhite, capturedBlack, winner, winReason]);
 
+  // Bookmarks / Snapshots State
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => {
+    const saved = localStorage.getItem('chain_capture_chess_bookmarks_v2');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('chain_capture_chess_bookmarks_v2', JSON.stringify(bookmarks));
+  }, [bookmarks]);
+
   // Modals & UI
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
+  const [isPlaybackOpen, setIsPlaybackOpen] = useState<boolean>(false);
+
   const [isAIThinking, setIsAIThinking] = useState<boolean>(false);
   const isAiThinkingRef = useRef<boolean>(false);
   const aiTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Bookmark / Snapshot Handlers
+  const handleCreateBookmark = (name: string) => {
+    const newBm: Bookmark = {
+      id: `bm_${Date.now()}`,
+      name,
+      createdAt: Date.now(),
+      board: cloneBoard(board),
+      currentTurn,
+      history: [...history],
+      capturedWhite: [...capturedWhite],
+      capturedBlack: [...capturedBlack],
+      winner,
+      winReason,
+      moveCount: history.length,
+    };
+    setBookmarks((prev) => [newBm, ...prev]);
+  };
+
+  const handleRestoreBookmark = (bm: Bookmark) => {
+    if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+    isAiThinkingRef.current = false;
+    setIsAIThinking(false);
+    setBoard(cloneBoard(bm.board));
+    setCurrentTurn(bm.currentTurn);
+    setHistory([...bm.history]);
+    setCapturedWhite([...bm.capturedWhite]);
+    setCapturedBlack([...bm.capturedBlack]);
+    setWinner(bm.winner);
+    setWinReason(bm.winReason);
+    setSelectedPos(null);
+    setValidMoves([]);
+    setChainState(null);
+    setIsBookmarksOpen(false);
+  };
+
+  const handleDeleteBookmark = (id: string) => {
+    setBookmarks((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  const handleResumePlayFromTurn = (reconstructed: {
+    board: Board;
+    currentTurn: PieceColor;
+    historySlice: TurnHistoryItem[];
+    capturedWhite: Piece[];
+    capturedBlack: Piece[];
+  }) => {
+    if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+    isAiThinkingRef.current = false;
+    setIsAIThinking(false);
+    setBoard(reconstructed.board);
+    setCurrentTurn(reconstructed.currentTurn);
+    setHistory(reconstructed.historySlice);
+    setCapturedWhite(reconstructed.capturedWhite);
+    setCapturedBlack(reconstructed.capturedBlack);
+    setWinner(null);
+    setWinReason('');
+    setSelectedPos(null);
+    setValidMoves([]);
+    setChainState(null);
+  };
 
   // Update sound settings
   useEffect(() => {
@@ -523,9 +607,12 @@ export default function App() {
           capturedWhite={capturedWhite.map((p) => p.type)}
           capturedBlack={capturedBlack.map((p) => p.type)}
           materialDiff={materialDiff}
+          bookmarkCount={bookmarks.length}
           onResetGame={handleResetGame}
           onOpenTutorial={() => setIsTutorialOpen(true)}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenBookmarks={() => setIsBookmarksOpen(true)}
+          onOpenPlayback={() => setIsPlaybackOpen(true)}
           onToggleSound={() =>
             setSettings((s) => ({ ...s, soundEnabled: !s.soundEnabled }))
           }
@@ -577,6 +664,25 @@ export default function App() {
         totalTurns={history.length}
         maxCombo={maxComboThisGame}
         onRematch={handleResetGame}
+      />
+
+      <BookmarksModal
+        isOpen={isBookmarksOpen}
+        bookmarks={bookmarks}
+        currentMoveCount={history.length}
+        currentTurn={currentTurn}
+        onClose={() => setIsBookmarksOpen(false)}
+        onCreateBookmark={handleCreateBookmark}
+        onRestoreBookmark={handleRestoreBookmark}
+        onDeleteBookmark={handleDeleteBookmark}
+      />
+
+      <PlaybackModal
+        isOpen={isPlaybackOpen}
+        history={history}
+        theme={settings.theme}
+        onClose={() => setIsPlaybackOpen(false)}
+        onResumePlayFromTurn={handleResumePlayFromTurn}
       />
     </div>
   );

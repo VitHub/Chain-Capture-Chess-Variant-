@@ -1,7 +1,7 @@
 import React from 'react';
 import { GameSettings, PieceColor } from '../types/chess';
 import { PieceIcon } from './PieceIcon';
-import { Volume2, VolumeX, BookOpen, Settings, RotateCcw, Bot, User, WifiOff } from 'lucide-react';
+import { Volume2, VolumeX, BookOpen, Settings, RotateCcw, Bot, User, WifiOff, Bookmark, Film } from 'lucide-react';
 
 interface GameHeaderProps {
   currentTurn: PieceColor;
@@ -9,9 +9,12 @@ interface GameHeaderProps {
   capturedWhite: PieceColor extends 'white' ? string[] : string[]; // list of captured piece types
   capturedBlack: PieceColor extends 'white' ? string[] : string[];
   materialDiff: number; // positive = white advantage, negative = black advantage
+  bookmarkCount?: number;
   onResetGame: () => void;
   onOpenTutorial: () => void;
   onOpenSettings: () => void;
+  onOpenBookmarks?: () => void;
+  onOpenPlayback?: () => void;
   onToggleSound: () => void;
   onToggleMode?: (mode: 'ai' | 'pvp') => void;
   isAITinking?: boolean;
@@ -21,9 +24,12 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   currentTurn,
   settings,
   materialDiff,
+  bookmarkCount = 0,
   onResetGame,
   onOpenTutorial,
   onOpenSettings,
+  onOpenBookmarks,
+  onOpenPlayback,
   onToggleSound,
   onToggleMode,
   isAITinking = false,
@@ -52,6 +58,31 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5">
+          {onOpenBookmarks && (
+            <button
+              onClick={onOpenBookmarks}
+              className="relative p-2 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 transition-all"
+              title="Bookmarks & Snapshots"
+            >
+              <Bookmark className="w-4 h-4" />
+              {bookmarkCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-black font-mono font-bold text-[9px] flex items-center justify-center">
+                  {bookmarkCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {onOpenPlayback && (
+            <button
+              onClick={onOpenPlayback}
+              className="p-2 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 transition-all"
+              title="Game Playback & Replays"
+            >
+              <Film className="w-4 h-4" />
+            </button>
+          )}
+
           <button
             onClick={onToggleSound}
             className="p-2 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition-all"

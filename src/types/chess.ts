@@ -67,3 +67,32 @@ export interface GameSettings {
   showHighlights: boolean;
   autoFlipBoard: boolean;
 }
+
+export interface Bookmark {
+  id: string;
+  name: string;
+  createdAt: number;
+  board: Board;
+  currentTurn: PieceColor;
+  history: TurnHistoryItem[];
+  capturedWhite: Piece[];
+  capturedBlack: Piece[];
+  winner: PieceColor | 'draw' | null;
+  winReason: string;
+  moveCount: number;
+}
+
+export interface GameSaveFile {
+  version: number;
+  id: string;
+  title: string;
+  createdAt: number;
+  settings: GameSettings;
+  history: TurnHistoryItem[];
+  capturedWhite: Piece[];
+  capturedBlack: Piece[];
+  winner: PieceColor | 'draw' | null;
+  winReason: string;
+  finalBoard: Board;
+  finalTurn: PieceColor;
+}
