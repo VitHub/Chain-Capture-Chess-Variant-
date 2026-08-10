@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Board,
   BoardTheme,
@@ -113,6 +113,8 @@ export default function App() {
   const [isTutorialOpen, setIsTutorialOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isAIThinking, setIsAIThinking] = useState<boolean>(false);
+  const isAiThinkingRef = useRef<boolean>(false);
+  const aiTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update sound settings
   useEffect(() => {
@@ -393,6 +395,9 @@ export default function App() {
 
   // Reset Game
   const handleResetGame = () => {
+    if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+    isAiThinkingRef.current = false;
+    setIsAIThinking(false);
     setBoard(createInitialBoard());
     setCurrentTurn('white');
     setSelectedPos(null);
@@ -409,88 +414,91 @@ export default function App() {
 
   // AI Opponent Trigger Effect
   useEffect(() => {
-    if (
-      settings.mode === 'ai' &&
-      currentTurn === settings.aiColor &&
-      !winner &&
-      !isAIThinking
-    ) {
-      setIsAIThinking(true);
+    const isAiTurn = settings.mode === 'ai' && currentTurn === settings.aiColor && !winner;
 
-      const timer = setTimeout(() => {
-        const plan = getAIMovePlan(board, settings.aiColor, settings.aiDifficulty);
+    if (isAiTurn) {
+      if (!isAiThinkingRef.current) {
+        isAiThinkingRef.current = true;
+        setIsAIThinking(true);
 
-        if (!plan || plan.steps.length === 0) {
-          // No legal moves
-          setWinner(settings.aiColor === 'white' ? 'black' : 'white');
-          setWinReason('Opponent has no legal moves (Stalemate)');
-          setIsAIThinking(false);
-          return;
-        }
+        if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
 
-        // Execute AI plan sequentially
-        let tempBoard = cloneBoard(board);
-        let currPos = plan.startPos;
-        const capturedList: Piece[] = [];
-        const stepsTaken: MoveStep[] = [];
-        const movingPiece = tempBoard[currPos.row][currPos.col];
+        aiTimerRef.current = setTimeout(() => {
+          try {
+            const plan = getAIMovePlan(board, settings.aiColor, settings.aiDifficulty);
 
-        if (!movingPiece) {
-          setIsAIThinking(false);
-          return;
-        }
-
-        let activeType = movingPiece.type;
-
-        for (let i = 0; i < plan.steps.length; i++) {
-          const targetPos = plan.steps[i];
-          const targetPiece = tempBoard[targetPos.row][targetPos.col];
-
-          tempBoard[targetPos.row][targetPos.col] = movingPiece;
-          tempBoard[currPos.row][currPos.col] = null;
-
-          const step: MoveStep = {
-            from: currPos,
-            to: targetPos,
-            capturedPiece: targetPiece,
-            activeType,
-            isChainStep: i > 0,
-          };
-          stepsTaken.push(step);
-
-          if (targetPiece) {
-            capturedList.push(targetPiece);
-            activeType = targetPiece.type; // Identity takeover
-            if (targetPiece.type === 'king') {
-              setBoard(tempBoard);
-              setWinner(settings.aiColor);
-              setWinReason('Bot captured your King in a multi-hop combo!');
-              soundManager.playLoss();
-              setIsAIThinking(false);
+            if (!plan || plan.steps.length === 0) {
+              // No legal moves
+              setWinner(settings.aiColor === 'white' ? 'black' : 'white');
+              setWinReason('Opponent has no legal moves (Stalemate)');
               return;
             }
+
+            // Execute AI plan sequentially
+            let tempBoard = cloneBoard(board);
+            let currPos = plan.startPos;
+            const capturedList: Piece[] = [];
+            const stepsTaken: MoveStep[] = [];
+            const movingPiece = tempBoard[currPos.row][currPos.col];
+
+            if (!movingPiece) return;
+
+            let activeType = movingPiece.type;
+
+            for (let i = 0; i < plan.steps.length; i++) {
+              const targetPos = plan.steps[i];
+              const targetPiece = tempBoard[targetPos.row][targetPos.col];
+
+              tempBoard[targetPos.row][targetPos.col] = movingPiece;
+              tempBoard[currPos.row][currPos.col] = null;
+
+              const step: MoveStep = {
+                from: currPos,
+                to: targetPos,
+                capturedPiece: targetPiece,
+                activeType,
+                isChainStep: i > 0,
+              };
+              stepsTaken.push(step);
+
+              if (targetPiece) {
+                capturedList.push(targetPiece);
+                activeType = targetPiece.type; // Identity takeover
+                if (targetPiece.type === 'king') {
+                  setBoard(tempBoard);
+                  setWinner(settings.aiColor);
+                  setWinReason('Bot captured your King in a direct move!');
+                  soundManager.playLoss();
+                  return;
+                }
+              }
+
+              currPos = targetPos;
+            }
+
+            if (capturedList.length > 0) {
+              soundManager.playCombo(capturedList.length);
+            } else {
+              soundManager.playMove();
+            }
+
+            finalizeTurn(
+              tempBoard,
+              stepsTaken,
+              capturedList,
+              movingPiece.type,
+              activeType
+            );
+          } finally {
+            setIsAIThinking(false);
+            isAiThinkingRef.current = false;
           }
-
-          currPos = targetPos;
-        }
-
-        if (capturedList.length > 0) {
-          soundManager.playCombo(capturedList.length);
-        } else {
-          soundManager.playMove();
-        }
-
-        finalizeTurn(
-          tempBoard,
-          stepsTaken,
-          capturedList,
-          movingPiece.type,
-          activeType
-        );
-        setIsAIThinking(false);
-      }, 180);
-
-      return () => clearTimeout(timer);
+        }, 180);
+      }
+    } else {
+      if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
+      isAiThinkingRef.current = false;
+      setIsAIThinking(false);
     }
   }, [
     currentTurn,
@@ -499,7 +507,6 @@ export default function App() {
     settings.aiDifficulty,
     board,
     winner,
-    isAIThinking,
     finalizeTurn,
   ]);
 
