@@ -1,13 +1,14 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AIDifficulty, BoardTheme, GameMode, GameSettings, PieceColor } from '../types/chess';
-import { X, Bot, User, Palette, Volume2, Sparkles } from 'lucide-react';
+import { X, Bot, User, Palette, Volume2, Sparkles, BookOpen } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
   settings: GameSettings;
   onUpdateSettings: (newSettings: Partial<GameSettings>) => void;
   onClose: () => void;
+  onOpenRules?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -15,14 +16,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onUpdateSettings,
   onClose,
+  onOpenRules,
 }) => {
   if (!isOpen) return null;
 
-  const themes: { id: BoardTheme; name: string; bg: string }[] = [
-    { id: 'emerald', name: 'Emerald Forest', bg: 'from-emerald-700 to-lime-600' },
-    { id: 'walnut', name: 'Classic Walnut', bg: 'from-amber-800 to-yellow-700' },
-    { id: 'slate', name: 'Modern Slate', bg: 'from-slate-700 to-zinc-600' },
-    { id: 'cyber', name: 'Cyber Neon', bg: 'from-fuchsia-800 to-indigo-900' },
+  const themes: { id: BoardTheme; name: string; bg: string; desc: string }[] = [
+    { id: 'artistic', name: 'Artistic Flair', bg: 'from-amber-600 via-orange-600 to-red-800', desc: 'Warm expressionist canvas' },
+    { id: 'elegant', name: 'Elegant Dark', bg: 'from-amber-900 via-yellow-950 to-stone-900', desc: 'Obsidian & champagne gold' },
+    { id: 'sophisticated', name: 'Sophisticated Dark', bg: 'from-slate-700 via-cyan-950 to-slate-900', desc: 'Refined slate & emerald' },
+    { id: 'geometric', name: 'Geometric Balance', bg: 'from-zinc-600 via-neutral-800 to-black', desc: 'Architectural monochrome' },
+    { id: 'immersive', name: 'Immersive UI', bg: 'from-purple-800 via-fuchsia-900 to-indigo-950', desc: 'Cosmic glowing neon' },
   ];
 
   return (
@@ -138,19 +141,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Palette className="w-3.5 h-3.5 text-amber-500" />
                 <span>Visual Theme</span>
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {themes.map((t) => (
                   <button
                     key={t.id}
                     onClick={() => onUpdateSettings({ theme: t.id })}
-                    className={`p-2.5 rounded border flex items-center gap-2 transition-all font-mono text-xs ${
+                    className={`p-2.5 rounded border flex items-center gap-2.5 text-left transition-all font-mono ${
                       settings.theme === t.id
-                        ? 'border-amber-500 bg-amber-500/10 text-white font-bold'
-                        : 'border-white/5 bg-[#121212] text-gray-400 hover:text-white'
+                        ? 'border-amber-500 bg-amber-500/10 text-white font-bold shadow-md'
+                        : 'border-white/5 bg-[#121212] text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded bg-gradient-to-br ${t.bg}`} />
-                    <span>{t.name}</span>
+                    <div className={`w-5 h-5 rounded-md shrink-0 bg-gradient-to-br ${t.bg} border border-white/20`} />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs truncate">{t.name}</span>
+                      <span className="text-[10px] text-gray-500 font-normal truncate">{t.desc}</span>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -190,7 +196,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-white/5 flex justify-end">
+          <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+            {onOpenRules ? (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenRules();
+                }}
+                className="px-3.5 py-2 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-mono text-xs uppercase tracking-wider flex items-center gap-1.5 border border-amber-500/30 transition-all"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>View Rules</span>
+              </button>
+            ) : <div />}
+
             <button
               onClick={onClose}
               className="px-5 py-2 rounded bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs font-mono uppercase tracking-widest shadow-lg"

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, ChevronRight, ChevronLeft, Play, RefreshCw } from 'lucide-react';
+import { X, Sparkles, ChevronRight, ChevronLeft, Play, RefreshCw, Crown, ShieldAlert, BookOpen } from 'lucide-react';
 import { PieceIcon } from './PieceIcon';
 
 interface TutorialModalProps {
@@ -65,6 +65,26 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
       ),
     },
     {
+      title: '👑 King Capture Restriction',
+      description:
+        'CRITICAL RULE: You CANNOT capture the opponent\'s King in the same turn that you took any other opponent pieces!',
+      icon: <Crown className="w-8 h-8 text-amber-400" />,
+      content: (
+        <div className="flex flex-col gap-2.5 my-2 bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs">
+          <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-300 font-medium flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+            <div>
+              <strong className="block text-rose-200 uppercase tracking-wider text-[11px] mb-1">No Multi-Capture King Takeover</strong>
+              If you have already captured a piece on your current turn, the King square is disabled for subsequent chain moves.
+            </div>
+          </div>
+          <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 font-medium">
+            ✅ <strong>Allowed:</strong> Capturing the King as the <em>first and only move</em> of your turn wins the game!
+          </div>
+        </div>
+      ),
+    },
+    {
       title: 'Decision & Controls',
       description:
         'After capturing a piece, you can choose to keep chaining OR click "End Turn Here" whenever you want to finalize your move!',
@@ -75,7 +95,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
             💡 <strong>Pro-Tip:</strong> If you move to an empty square during a chain, your turn automatically ends because no new piece was captured to inherit next!
           </div>
           <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded text-emerald-300 font-medium">
-            👑 <strong>King Capture Victory:</strong> Capturing the opponent\'s King during a chain instantly wins the match!
+            👑 <strong>Direct King Checkmate:</strong> Taking the King on a single initial move wins the game instantly!
           </div>
         </div>
       ),

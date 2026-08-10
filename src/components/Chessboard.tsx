@@ -34,49 +34,111 @@ export const Chessboard: React.FC<ChessboardProps> = ({
   lastMove,
   disabled = false,
 }) => {
-  // Theme color definitions matching Elegant Dark palette
-  const themeStyles = {
+  // Theme color definitions for all requested visual styles
+  const allThemeStyles: Record<string, {
+    light: string;
+    dark: string;
+    border: string;
+    selected: string;
+    moveDot: string;
+    captureRing: string;
+    lastMove: string;
+    chainGlow: string;
+  }> = {
+    artistic: {
+      light: 'bg-[#e6d5c3] text-[#7c3a21]',
+      dark: 'bg-[#964b32] text-[#f4eae1]',
+      border: 'border-amber-900/50',
+      selected: 'ring-2 ring-orange-500 bg-orange-500/25',
+      moveDot: 'bg-orange-500/90 hover:bg-orange-400',
+      captureRing: 'ring-2 ring-orange-500 bg-orange-500/30',
+      lastMove: 'bg-amber-600/20 border-amber-600/40',
+      chainGlow: 'shadow-[0_0_22px_rgba(234,88,12,0.8)] border-2 border-orange-500',
+    },
+    elegant: {
+      light: 'bg-[#2a2621] text-[#d4af37]',
+      dark: 'bg-[#151310] text-[#8a7322]',
+      border: 'border-amber-500/20',
+      selected: 'ring-2 ring-amber-400 bg-amber-400/20',
+      moveDot: 'bg-amber-400/90 hover:bg-amber-300',
+      captureRing: 'ring-2 ring-amber-400 bg-amber-400/25',
+      lastMove: 'bg-amber-500/15 border-amber-400/30',
+      chainGlow: 'shadow-[0_0_20px_rgba(245,158,11,0.7)] border-2 border-amber-400',
+    },
+    sophisticated: {
+      light: 'bg-[#242e38] text-[#83a5c5]',
+      dark: 'bg-[#151c24] text-[#4d6a85]',
+      border: 'border-cyan-500/20',
+      selected: 'ring-2 ring-cyan-400 bg-cyan-400/20',
+      moveDot: 'bg-cyan-400/90 hover:bg-cyan-300',
+      captureRing: 'ring-2 ring-emerald-400 bg-emerald-400/25',
+      lastMove: 'bg-cyan-500/15 border-cyan-400/30',
+      chainGlow: 'shadow-[0_0_20px_rgba(34,211,238,0.7)] border-2 border-cyan-400',
+    },
+    geometric: {
+      light: 'bg-[#333333] text-[#e0e0e0]',
+      dark: 'bg-[#1a1a1a] text-[#888888]',
+      border: 'border-white/20',
+      selected: 'ring-2 ring-white bg-white/20',
+      moveDot: 'bg-white/90 hover:bg-gray-200',
+      captureRing: 'ring-2 ring-white bg-white/25',
+      lastMove: 'bg-white/10 border-white/30',
+      chainGlow: 'shadow-[0_0_20px_rgba(255,255,255,0.8)] border-2 border-white',
+    },
+    immersive: {
+      light: 'bg-[#2a133d] text-[#e879f9]',
+      dark: 'bg-[#160824] text-[#a21caf]',
+      border: 'border-fuchsia-500/30',
+      selected: 'ring-2 ring-fuchsia-400 bg-fuchsia-500/25',
+      moveDot: 'bg-fuchsia-400/90 hover:bg-fuchsia-300',
+      captureRing: 'ring-2 ring-pink-500 bg-pink-500/30',
+      lastMove: 'bg-fuchsia-900/30 border-fuchsia-500/40',
+      chainGlow: 'shadow-[0_0_25px_rgba(232,121,249,0.9)] border-2 border-fuchsia-400',
+    },
+    // Fallbacks for legacy theme names
     emerald: {
-      light: 'bg-[#222222] text-[#888888]',
-      dark: 'bg-[#1A1A1A] text-[#aaaaaa]',
-      border: 'border-white/10',
-      selected: 'ring-2 ring-amber-500 bg-amber-500/20',
-      moveDot: 'bg-amber-500/80 hover:bg-amber-400',
-      captureRing: 'ring-2 ring-amber-500 bg-amber-500/20',
-      lastMove: 'bg-amber-500/10 border-amber-500/30',
-      chainGlow: 'shadow-[0_0_20px_rgba(245,158,11,0.6)] border-2 border-amber-500',
+      light: 'bg-[#242e38] text-[#83a5c5]',
+      dark: 'bg-[#151c24] text-[#4d6a85]',
+      border: 'border-cyan-500/20',
+      selected: 'ring-2 ring-cyan-400 bg-cyan-400/20',
+      moveDot: 'bg-cyan-400/90 hover:bg-cyan-300',
+      captureRing: 'ring-2 ring-emerald-400 bg-emerald-400/25',
+      lastMove: 'bg-cyan-500/15 border-cyan-400/30',
+      chainGlow: 'shadow-[0_0_20px_rgba(34,211,238,0.7)] border-2 border-cyan-400',
     },
     walnut: {
-      light: 'bg-[#2a2421] text-[#b58863]',
-      dark: 'bg-[#1c1816] text-[#8c6239]',
-      border: 'border-amber-900/40',
-      selected: 'ring-2 ring-amber-500 bg-amber-500/20',
-      moveDot: 'bg-amber-600/80 hover:bg-amber-500',
-      captureRing: 'ring-2 ring-amber-500 bg-amber-500/20',
-      lastMove: 'bg-amber-900/30',
-      chainGlow: 'shadow-[0_0_20px_rgba(245,158,11,0.6)] border-2 border-amber-500',
+      light: 'bg-[#2a2621] text-[#d4af37]',
+      dark: 'bg-[#151310] text-[#8a7322]',
+      border: 'border-amber-500/20',
+      selected: 'ring-2 ring-amber-400 bg-amber-400/20',
+      moveDot: 'bg-amber-400/90 hover:bg-amber-300',
+      captureRing: 'ring-2 ring-amber-400 bg-amber-400/25',
+      lastMove: 'bg-amber-500/15 border-amber-400/30',
+      chainGlow: 'shadow-[0_0_20px_rgba(245,158,11,0.7)] border-2 border-amber-400',
     },
     slate: {
-      light: 'bg-[#282a36] text-[#6272a4]',
-      dark: 'bg-[#1e1f29] text-[#44475a]',
-      border: 'border-white/10',
-      selected: 'ring-2 ring-cyan-400 bg-cyan-500/20',
-      moveDot: 'bg-cyan-400/80 hover:bg-cyan-300',
-      captureRing: 'ring-2 ring-cyan-400 bg-cyan-500/20',
-      lastMove: 'bg-cyan-900/30',
-      chainGlow: 'shadow-[0_0_20px_rgba(6,182,212,0.6)] border-2 border-cyan-400',
+      light: 'bg-[#333333] text-[#e0e0e0]',
+      dark: 'bg-[#1a1a1a] text-[#888888]',
+      border: 'border-white/20',
+      selected: 'ring-2 ring-white bg-white/20',
+      moveDot: 'bg-white/90 hover:bg-gray-200',
+      captureRing: 'ring-2 ring-white bg-white/25',
+      lastMove: 'bg-white/10 border-white/30',
+      chainGlow: 'shadow-[0_0_20px_rgba(255,255,255,0.8)] border-2 border-white',
     },
     cyber: {
-      light: 'bg-[#261035] text-[#d946ef]',
-      dark: 'bg-[#180922] text-[#86198f]',
+      light: 'bg-[#2a133d] text-[#e879f9]',
+      dark: 'bg-[#160824] text-[#a21caf]',
       border: 'border-fuchsia-500/30',
-      selected: 'ring-2 ring-fuchsia-400 bg-fuchsia-500/20',
-      moveDot: 'bg-fuchsia-400/80 hover:bg-fuchsia-300',
-      captureRing: 'ring-2 ring-fuchsia-400 bg-fuchsia-500/20',
-      lastMove: 'bg-fuchsia-900/30',
-      chainGlow: 'shadow-[0_0_20px_rgba(217,70,239,0.7)] border-2 border-fuchsia-400',
+      selected: 'ring-2 ring-fuchsia-400 bg-fuchsia-500/25',
+      moveDot: 'bg-fuchsia-400/90 hover:bg-fuchsia-300',
+      captureRing: 'ring-2 ring-pink-500 bg-pink-500/30',
+      lastMove: 'bg-fuchsia-900/30 border-fuchsia-500/40',
+      chainGlow: 'shadow-[0_0_25px_rgba(232,121,249,0.9)] border-2 border-fuchsia-400',
     },
-  }[theme];
+  };
+
+  const themeStyles = allThemeStyles[theme] || allThemeStyles.elegant;
 
   const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
   const ranks = ['8', '7', '6', '5', '4', '3', '2', '1'];

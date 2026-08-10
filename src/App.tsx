@@ -62,7 +62,7 @@ export default function App() {
       mode: 'ai',
       aiDifficulty: 'medium',
       aiColor: 'black',
-      theme: 'emerald',
+      theme: 'elegant',
       soundEnabled: true,
       showHighlights: true,
       autoFlipBoard: false,
@@ -123,12 +123,17 @@ export default function App() {
   useEffect(() => {
     if (chainState) {
       // In active chain state -> moves are based on activeIdentity at chainState.currentPos
-      const moves = getRawMoves(
+      let moves = getRawMoves(
         board,
         chainState.currentPos,
         chainState.activeIdentity,
         currentTurn
       );
+      // RULE RESTRICTION: Cannot capture opponent King in the same turn after capturing another piece
+      moves = moves.filter((m) => {
+        const target = board[m.row][m.col];
+        return !(target && target.type === 'king' && target.color !== currentTurn);
+      });
       setValidMoves(settings.showHighlights ? moves : []);
     } else if (selectedPos) {
       const piece = board[selectedPos.row][selectedPos.col];
@@ -556,6 +561,7 @@ export default function App() {
         settings={settings}
         onUpdateSettings={(newS) => setSettings((s) => ({ ...s, ...newS }))}
         onClose={() => setIsSettingsOpen(false)}
+        onOpenRules={() => setIsTutorialOpen(true)}
       />
 
       <GameOverModal

@@ -47,7 +47,16 @@ export interface ChainState {
 export type GameMode = 'pvp' | 'ai';
 export type AIDifficulty = 'easy' | 'medium' | 'hard';
 
-export type BoardTheme = 'emerald' | 'walnut' | 'slate' | 'cyber';
+export type BoardTheme =
+  | 'artistic'
+  | 'elegant'
+  | 'sophisticated'
+  | 'geometric'
+  | 'immersive'
+  | 'emerald'
+  | 'walnut'
+  | 'slate'
+  | 'cyber';
 
 export interface GameSettings {
   mode: GameMode;

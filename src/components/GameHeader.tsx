@@ -1,7 +1,7 @@
 import React from 'react';
 import { GameSettings, PieceColor } from '../types/chess';
 import { PieceIcon } from './PieceIcon';
-import { Volume2, VolumeX, HelpCircle, Settings, RotateCcw, Bot, User, WifiOff } from 'lucide-react';
+import { Volume2, VolumeX, BookOpen, Settings, RotateCcw, Bot, User, WifiOff } from 'lucide-react';
 
 interface GameHeaderProps {
   currentTurn: PieceColor;
@@ -62,10 +62,11 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
           <button
             onClick={onOpenTutorial}
-            className="p-2 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-amber-400 transition-all"
-            title="Rules & How to Play"
+            className="px-2.5 py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:text-amber-300 font-mono text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm"
+            title="Game Rules & Guide"
           >
-            <HelpCircle className="w-4 h-4" />
+            <BookOpen className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline font-bold">Rules</span>
           </button>
 
           <button

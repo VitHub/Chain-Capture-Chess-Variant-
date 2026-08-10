@@ -47,6 +47,9 @@ function searchChainCapture(
 
     // Search capture moves in chain expansion
     if (targetPiece && targetPiece.color !== color) {
+      // RULE RESTRICTION: Cannot capture opponent King in the same turn after capturing another piece
+      if (targetPiece.type === 'king') continue;
+
       const movingPiece = board[currentPos.row][currentPos.col];
 
       // Mutate board in-place
@@ -54,8 +57,7 @@ function searchChainCapture(
       board[currentPos.row][currentPos.col] = null;
 
       const capturedValue = PIECE_VALUES[targetPiece.type] || 10;
-      const isKing = targetPiece.type === 'king';
-      const stepScore = capturedValue + (isKing ? 10000 : 0);
+      const stepScore = capturedValue;
 
       const newSteps = [...accumulatedSteps, targetPos];
       const newScore = accumulatedScore + stepScore;
@@ -67,7 +69,7 @@ function searchChainCapture(
       });
 
       // Continue searching from targetPos with targetPiece's identity
-      if (!isKing && depth + 1 < maxDepth) {
+      if (depth + 1 < maxDepth) {
         searchChainCapture(
           board,
           targetPos,
