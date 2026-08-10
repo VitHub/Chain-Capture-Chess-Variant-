@@ -134,6 +134,12 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState<boolean>(false);
   const [isPlaybackOpen, setIsPlaybackOpen] = useState<boolean>(false);
+  const [explosionPos, setExplosionPos] = useState<Position | null>(null);
+
+  const triggerExplosion = (pos: Position) => {
+    setExplosionPos(pos);
+    setTimeout(() => setExplosionPos(null), 550);
+  };
 
   const [isAIThinking, setIsAIThinking] = useState<boolean>(false);
   const isAiThinkingRef = useRef<boolean>(false);
@@ -329,6 +335,8 @@ export default function App() {
         const updatedCaptured = [...chainState.capturedThisTurn, targetPiece];
         const updatedSteps = [...chainState.stepsTaken, newStep];
 
+        triggerExplosion(pos);
+
         // Check if captured King -> INSTANT WIN!
         if (targetPiece.type === 'king') {
           setBoard(newBoard);
@@ -351,7 +359,7 @@ export default function App() {
         });
       } else {
         // NON-CAPTURE MOVE IN CHAIN -> Turn Ends automatically!
-        soundManager.playMove();
+        soundManager.playPieceMove(chainState.activeIdentity);
         const updatedSteps = [...chainState.stepsTaken, newStep];
         finalizeTurn(
           newBoard,
@@ -388,6 +396,8 @@ export default function App() {
 
       if (targetPiece) {
         // INITIAL CAPTURE -> ACTIVATES CHAIN MODE!
+        triggerExplosion(pos);
+
         if (targetPiece.type === 'king') {
           setBoard(newBoard);
           setWinner(currentTurn);
@@ -412,12 +422,12 @@ export default function App() {
         setSelectedPos(null);
       } else {
         // NORMAL NON-CAPTURE MOVE -> Ends Turn
-        soundManager.playMove();
+        soundManager.playPieceMove(movingPiece.type);
         finalizeTurn(newBoard, [initialStep], [], movingPiece.type, movingPiece.type);
       }
     } else if (clickedPiece && clickedPiece.color === currentTurn) {
       // Select piece of current player's color
-      soundManager.playMove();
+      soundManager.playPieceMove(clickedPiece.type);
       setSelectedPos(pos);
     } else {
       setSelectedPos(null);
@@ -561,9 +571,11 @@ export default function App() {
             }
 
             if (capturedList.length > 0) {
+              const lastTarget = plan.steps[plan.steps.length - 1];
+              triggerExplosion(lastTarget);
               soundManager.playCombo(capturedList.length);
             } else {
-              soundManager.playMove();
+              soundManager.playPieceMove(movingPiece.type);
             }
 
             finalizeTurn(
@@ -635,6 +647,7 @@ export default function App() {
           onEndChain={handleEndChain}
           onUndoChainStep={handleUndoChainStep}
           lastMove={lastMove}
+          explosionPos={explosionPos}
           disabled={isAIThinking || !!winner}
         />
 

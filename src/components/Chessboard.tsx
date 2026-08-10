@@ -14,9 +14,10 @@ interface ChessboardProps {
   theme: BoardTheme;
   isFlipped: boolean;
   onSelectSquare: (pos: Position) => void;
-  onEndChain: () => void;
-  onUndoChainStep: () => void;
+  onEndChain?: () => void;
+  onUndoChainStep?: () => void;
   lastMove: { from: Position; to: Position } | null;
+  explosionPos?: Position | null;
   disabled?: boolean;
 }
 
@@ -32,6 +33,7 @@ export const Chessboard: React.FC<ChessboardProps> = ({
   onEndChain,
   onUndoChainStep,
   lastMove,
+  explosionPos,
   disabled = false,
 }) => {
   // Theme color definitions for all requested visual styles
@@ -255,6 +257,34 @@ export const Chessboard: React.FC<ChessboardProps> = ({
                       ) : (
                         <div className={`w-3.5 h-3.5 rounded-full ${themeStyles.moveDot} shadow-[0_0_8px_rgba(245,158,11,0.8)]`} />
                       )}
+                    </div>
+                  )}
+
+                  {/* Mild Explosion Particle Effect when piece is captured */}
+                  {explosionPos && isSamePos(explosionPos, squarePos) && (
+                    <div className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center overflow-hidden">
+                      <motion.div
+                        initial={{ scale: 0.2, opacity: 1, borderWidth: '4px' }}
+                        animate={{ scale: 2.2, opacity: 0, borderWidth: '0px' }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                        className="absolute w-12 h-12 rounded-full border border-amber-400 bg-amber-500/40 shadow-[0_0_25px_rgba(245,158,11,1)]"
+                      />
+                      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, idx) => {
+                        const rad = (angle * Math.PI) / 180;
+                        const distance = 26;
+                        const x = Math.cos(rad) * distance;
+                        const y = Math.sin(rad) * distance;
+
+                        return (
+                          <motion.div
+                            key={idx}
+                            initial={{ x: 0, y: 0, scale: 1.2, opacity: 1 }}
+                            animate={{ x, y, scale: 0, opacity: 0 }}
+                            transition={{ duration: 0.45, ease: 'easeOut' }}
+                            className="absolute w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,1)]"
+                          />
+                        );
+                      })}
                     </div>
                   )}
 
