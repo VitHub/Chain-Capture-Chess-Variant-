@@ -57,7 +57,8 @@ function searchChainCapture(
       board[currentPos.row][currentPos.col] = null;
 
       const capturedValue = PIECE_VALUES[targetPiece.type] || 10;
-      const stepScore = capturedValue;
+      // Multi-step chain bonus: heavily reward longer chain capture sequences
+      const stepScore = capturedValue + 25 * depth;
 
       const newSteps = [...accumulatedSteps, targetPos];
       const newScore = accumulatedScore + stepScore;
@@ -100,7 +101,7 @@ export function getAllPossibleMovePlans(
   difficulty: AIDifficulty
 ): ChainMovePlan[] {
   const plans: ChainMovePlan[] = [];
-  const maxChainDepth = difficulty === 'hard' ? 4 : difficulty === 'medium' ? 2 : 1;
+  const maxChainDepth = difficulty === 'hard' ? 6 : difficulty === 'medium' ? 4 : 2;
 
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
